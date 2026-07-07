@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Each job has TWO targets: one for when the service runs in Docker
+# (container name, on the shared bizno-net network) and another for when
+# it runs in the IDE (host.docker.internal). Whichever target isn't
+# active shows up as DOWN in /targets — this is expected and harmless.
+# No need to edit anything when switching between the two modes.
+
+scrape_configs:
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:9081']
+        labels: { service: 'auth-service', source: 'docker' }
+      - targets: ['host.docker.internal:9081']
+        labels: { service: 'auth-service', source: 'ide' }
+
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:9080']
+        labels: { service: 'api-gateway', source: 'docker' }
+      - targets: ['host.docker.internal:9080']
+        labels: { service: 'api-gateway', source: 'ide' }
+
+  - job_name: 'discovery-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['discovery-server:9761']
+        labels: { service: 'discovery-server', source: 'docker' }
+      - targets: ['host.docker.internal:9761']
+        labels: { service: 'discovery-server', source: 'ide' }
+
+  - job_name: 'config-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['config-server:9888']
+        labels: { service: 'config-server', source: 'docker' }
+      - targets: ['host.docker.internal:9888']
+        labels: { service: 'config-server', source: 'ide' }
