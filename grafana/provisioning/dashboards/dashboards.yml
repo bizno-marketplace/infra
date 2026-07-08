@@ -6,6 +6,6 @@ providers:
     folder: 'Bizno'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 30
+    updateIntervalSeconds: 15
     options:
       path: /etc/grafana/provisioning/dashboards/json

@@ -7,6 +7,8 @@ global:
 # it runs in the IDE (host.docker.internal). Whichever target isn't
 # active shows up as DOWN in /targets — this is expected and harmless.
 # No need to edit anything when switching between the two modes.
+# (For k8s, only the container/service-name-style target applies — see
+# the ConfigMap embedded in deployment.yaml for the k8s-specific version.)
 
 scrape_configs:
   - job_name: 'auth-service'
@@ -33,10 +35,10 @@ scrape_configs:
       - targets: ['host.docker.internal:9761']
         labels: { service: 'discovery-server', source: 'ide' }
 
-  - job_name: 'config-server'
+  - job_name: 'configserver'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['config-server:9888']
-        labels: { service: 'config-server', source: 'docker' }
+      - targets: ['configserver:9888']
+        labels: { service: 'configserver', source: 'docker' }
       - targets: ['host.docker.internal:9888']
-        labels: { service: 'config-server', source: 'ide' }
+        labels: { service: 'configserver', source: 'ide' }
