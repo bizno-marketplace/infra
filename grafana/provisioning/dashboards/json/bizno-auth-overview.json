@@ -64,11 +64,11 @@
     },
     {
       "type": "stat",
-      "title": "config-server",
+      "title": "configserver",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "max by (service) (up{service=\"config-server\"})", "legendFormat": "config-server" }
+        { "expr": "max by (service) (up{service=\"configserver\"})", "legendFormat": "configserver" }
       ],
       "fieldConfig": {
         "defaults": {

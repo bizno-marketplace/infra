@@ -11,7 +11,21 @@ services:
       - "host.docker.internal:host-gateway"   # required on Linux; no-op on Mac/Windows
     networks:
       - bizno-net           # to reach services when they run in Docker
-      - observability-net   # internal network for Prometheus <-> Grafana
+      - observability-net   # internal network for Prometheus <-> Grafana <-> Loki
+
+  loki:
+    image: grafana/loki:3.7.3
+    container_name: bizno-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - bizno-net           # services push logs here directly (Loki4j appender)
+      - observability-net
 
   grafana:
     image: grafana/grafana:13.1.0
@@ -30,9 +44,11 @@ services:
       - observability-net
     depends_on:
       - prometheus
+      - loki
 
 volumes:
   grafana-data:
+  loki-data:
 
 networks:
   observability-net:
@@ -40,14 +56,10 @@ networks:
 
   bizno-net:
     external: true
-    # Network shared with your main docker-compose. Only used when
+    # Network shared with the 4 services + messaging. Only used when
     # services run in Docker; if you're only using the IDE, this
     # network still exists but simply has no containers on it
     # (targets show DOWN, no problem).
     #
     # Create it if it doesn't exist yet:
     #   docker network create bizno-net
-    #
-    # And make sure your main docker-compose also joins the services
-    # (auth-service, api-gateway, discovery-server, config-server) to
-    # this same external network, so the names resolve.
