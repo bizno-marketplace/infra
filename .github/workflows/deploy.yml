@@ -12,6 +12,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check secrets are set
+        run: |
+          if [ -z "${{ secrets.K8S_HOST }}" ]; then echo "K8S_HOST is EMPTY"; else echo "K8S_HOST is set"; fi
+          if [ -z "${{ secrets.K8S_USERNAME }}" ]; then echo "K8S_USERNAME is EMPTY"; else echo "K8S_USERNAME is set"; fi
+          if [ -z "${{ secrets.K8S_SSH_KEY }}" ]; then echo "K8S_SSH_KEY is EMPTY"; else echo "K8S_SSH_KEY is set"; fi
+
       - name: Copy infra repo to the k8s host
         uses: appleboy/scp-action@v0.1.7
         with:
