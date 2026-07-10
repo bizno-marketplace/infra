@@ -16,7 +16,7 @@ datasources:
     url: http://loki:3100
     editable: true
 
-  - name: zipkin
+  - name: Zipkin
     type: zipkin
     uid: zipkin
     access: proxy
