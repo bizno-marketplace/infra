@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin
+  namespace: bizno
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: zipkin }
+  template:
+    metadata:
+      labels: { app: zipkin }
+    spec:
+      containers:
+        - name: zipkin
+          image: openzipkin/zipkin:3.6.0
+          ports:
+            - containerPort: 9411
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          # In-memory storage by default — traces are lost on pod restart.
+          # Fine for local k3s; swap STORAGE_TYPE env var (Elasticsearch,
+          # etc.) before relying on this for anything long-lived on DOKS.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zipkin
+  namespace: bizno
+spec:
+  selector: { app: zipkin }
+  ports:
+    - port: 9411
+      targetPort: 9411
+  type: ClusterIP   # services push spans here directly; use port-forward to view the UI

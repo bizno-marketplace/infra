@@ -17,9 +17,9 @@ services:
     image: grafana/loki:3.7.3
     container_name: bizno-loki
     restart: unless-stopped
-    command: -config.file=/etc/loki/loki-config.yaml
+    command: -config.file=/etc/loki/loki-config.yml
     volumes:
-      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki-data:/loki
     ports:
       - "3100:3100"
@@ -45,6 +45,18 @@ services:
     depends_on:
       - prometheus
       - loki
+  zipkin:
+    image: openzipkin/zipkin:3.6.0
+    container_name: bizno-zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - bizno-net           # services push spans here directly
+      - observability-net
+    # Default storage is in-memory — traces are lost on restart. Fine for
+    # local dev; swap STORAGE_TYPE (Elasticsearch, etc.) before relying on
+    # this for anything long-lived.
 
 volumes:
   grafana-data:
