@@ -1,0 +1,49 @@
+name: Deploy Infra
+
+on:
+  push:
+    branches: [master, develop, staging]
+
+jobs:
+  deploy-infra:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name =='production' || github.ref_name == 'develop' || 'staging' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy infra repo to the k8s host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.K8S_HOST }}
+          username: ${{ secrets.K8S_USERNAME }}
+          key: ${{ secrets.K8S_SSH_KEY }}
+          source: "."
+          target: "~/bizno-infra"
+          strip_components: 0
+
+      - name: Generate .env.secrets and run scripts on the host
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.K8S_HOST }}
+          username: ${{ secrets.K8S_USERNAME }}
+          key: ${{ secrets.K8S_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/bizno-infra/_run
+
+            cat > .env.secrets << 'ENVEOF'
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            GRAFANA_ADMIN_USER=${{ secrets.GRAFANA_ADMIN_USER }}
+            GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            ENVEOF
+
+            chmod +x create-secrets.sh deploy-infra.sh
+            ./create-secrets.sh
+            ./deploy-infra.sh
+
+            # Clean up: .env.secrets never stays on disk longer than needed
+            rm -f .env.secrets
