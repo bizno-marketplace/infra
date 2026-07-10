@@ -33,6 +33,8 @@ COMPONENTS=(
   "zipkin"
   "prometheus"
   "grafana"
+  "postgres"
+  "redis"
 )
 
 BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
