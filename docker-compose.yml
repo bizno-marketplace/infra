@@ -45,6 +45,7 @@ services:
     depends_on:
       - prometheus
       - loki
+
   zipkin:
     image: openzipkin/zipkin:3.6.0
     container_name: bizno-zipkin
@@ -57,6 +58,57 @@ services:
     # Default storage is in-memory — traces are lost on restart. Fine for
     # local dev; swap STORAGE_TYPE (Elasticsearch, etc.) before relying on
     # this for anything long-lived.
+
+  redis:
+    image: redis:8.8.0-alpine
+    container_name: bizno-auth-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - bizno-net
+
+  postgres:
+    image: postgres:17.10-alpine
+    container_name: bizno-auth-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-bizno_auth}
+      - POSTGRES_USER=${POSTGRES_USER:-bizno}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bizno} -d ${POSTGRES_DB:-bizno_auth}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - bizno-net
+
+  nats:
+    image: nats:2.14.3-alpine
+    container_name: bizno-nats
+    command: [ "-js", "-m", "8222" ]
+    ports:
+      - "4222:4222"   # porta cliente (o que o teu NatsConfig usa via broker.url)
+      - "8222:8222"   # monitoring HTTP (útil para debug/health check)
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bizno-network
 
 volumes:
   grafana-data:

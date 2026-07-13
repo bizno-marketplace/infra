@@ -1,0 +1,55 @@
+name: Deploy Infra
+
+on:
+  push:
+    branches: [master, develop, staging]
+
+jobs:
+  deploy-infra:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'master' && 'production' || github.ref_name == 'develop' && 'develop' || github.ref_name == 'staging' && 'staging' || 'staging' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check secrets are set
+        run: |
+          if [ -z "${{ secrets.K8S_HOST }}" ]; then echo "K8S_HOST is EMPTY"; else echo "K8S_HOST is set"; fi
+          if [ -z "${{ secrets.K8S_USERNAME }}" ]; then echo "K8S_USERNAME is EMPTY"; else echo "K8S_USERNAME is set"; fi
+          if [ -z "${{ secrets.K8S_SSH_KEY }}" ]; then echo "K8S_SSH_KEY is EMPTY"; else echo "K8S_SSH_KEY is set"; fi
+
+      - name: Copy infra repo to the k8s host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.K8S_HOST }}
+          username: ${{ secrets.K8S_USERNAME }}
+          key: ${{ secrets.K8S_SSH_KEY }}
+          source: "."
+          target: "~/bizno-infra"
+          strip_components: 0
+
+      - name: Generate .env.secrets and run scripts on the host
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.K8S_HOST }}
+          username: ${{ secrets.K8S_USERNAME }}
+          key: ${{ secrets.K8S_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/bizno-infra/_run
+
+            cat > .env.secrets << 'ENVEOF'
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            GRAFANA_ADMIN_USER=${{ secrets.GRAFANA_ADMIN_USER }}
+            GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            ENVEOF
+
+            chmod +x create-secrets.sh deploy-infra.sh
+            ./create-secrets.sh
+            ./deploy-infra.sh
+
+            # Clean up: .env.secrets never stays on disk longer than needed
+            rm -f .env.secrets
