@@ -86,7 +86,7 @@ services:
     volumes:
       - bizno-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bizno} -d ${POSTGRES_DB:-bizno_auth}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bizno} -d ${POSTGRES_DB:-bizno}" ]
       interval: 5s
       timeout: 5s
       retries: 10
