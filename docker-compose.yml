@@ -61,7 +61,7 @@ services:
 
   redis:
     image: redis:8.8.0-alpine
-    container_name: bizno-auth-redis
+    container_name: bizno-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -75,16 +75,16 @@ services:
 
   postgres:
     image: postgres:17.10-alpine
-    container_name: bizno-auth-postgres
+    container_name: bizno-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-bizno_auth}
+      - POSTGRES_DB=${POSTGRES_DB:-bizno}
       - POSTGRES_USER=${POSTGRES_USER:-bizno}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-me}
     ports:
       - "5432:5432"
     volumes:
-      - auth-postgres-data:/var/lib/postgresql/data
+      - bizno-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bizno} -d ${POSTGRES_DB:-bizno_auth}" ]
       interval: 5s
@@ -108,11 +108,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - bizno-network
+      - bizno-net
 
 volumes:
+  bizno-postgres-data:
   grafana-data:
   loki-data:
+  nats-data:
 
 networks:
   observability-net:
